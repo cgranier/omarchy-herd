@@ -45,7 +45,13 @@ Requires `herdr` (shipped in the Omarchy repo), `jq`, and `hyprctl`.
 
 ## Settings
 
-Edit from the bar's widget settings, or inline on the `cgranier.herd` entry in `~/.config/omarchy/shell.json`.
+Omarchy has no settings UI for bar widgets yet, so set values with `omarchy bar set` (applies live; `--json` for
+booleans and numbers), or edit the `cgranier.herd` entry in `~/.config/omarchy/shell.json` by hand:
+
+```bash
+omarchy bar set cgranier.herd blockedBypassesDnd true --json
+omarchy bar set cgranier.herd machines "buildbox,nas"
+```
 
 | Key | Default | Meaning |
 |---|---|---|
