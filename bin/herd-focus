@@ -1,0 +1,81 @@
+#!/bin/bash
+
+# Jump to a herdr agent: focus its pane inside herdr, then raise the terminal
+# window showing that herdr session (or open one when none is attached).
+#
+# Usage: herd-focus <herdr-path> <machine-label|local> <ssh-host> <terminal-id> [session]
+# HERD_FOCUS_DRY=1 prints what it would do instead of doing it.
+
+set -uo pipefail
+
+HERDR="${1:-herdr}"
+MACHINE="${2:-local}"
+SSH_HOST="${3:-}"
+TERMINAL_ID="${4:-}"
+SESSION="${5:-default}"
+
+if [[ $MACHINE == "local" ]]; then
+  target=()
+  attach=("$HERDR")
+else
+  target=(--machine "$MACHINE")
+  attach=("$HERDR" --remote "${SSH_HOST:-$MACHINE}")
+  [[ $SESSION != "default" && -n $SESSION ]] && attach+=(--session "$SESSION")
+fi
+
+run() {
+  if [[ -n ${HERD_FOCUS_DRY:-} ]]; then
+    printf 'would run:'; printf ' %q' "$@"; echo
+  else
+    "$@"
+  fi
+}
+
+if [[ -n $TERMINAL_ID && -z ${HERD_FOCUS_DRY:-} ]]; then
+  timeout 10 "$HERDR" "${target[@]}" agent focus "$TERMINAL_ID" >/dev/null 2>&1
+fi
+
+# herdr clients run inside ordinary terminals with no class of their own, so
+# find the window by walking each herdr client process up to a Hyprland client.
+is_client_for_machine() {
+  local cmdline
+  cmdline=$(tr '\0' ' ' <"/proc/$1/cmdline" 2>/dev/null) || return 1
+  # Servers and one-shot CLI calls are not attached clients.
+  [[ $cmdline =~ (^|\ )(server|agent|api|pane|tab|workspace|machine|notification)(\ |$) ]] && return 1
+  if [[ $MACHINE == "local" ]]; then
+    [[ $cmdline != *"--remote"* && $cmdline != *"--machine"* ]]
+  else
+    [[ $cmdline == *"--remote ${SSH_HOST:-$MACHINE}"* || $cmdline == *"--machine $MACHINE"* ]]
+  fi
+}
+
+window_pids=$(hyprctl clients -j 2>/dev/null | jq -r '.[] | "\(.pid) \(.address)"')
+
+find_window() {
+  local pid=$1 hops=0 address
+  while ((pid > 1 && hops < 12)); do
+    address=$(awk -v p="$pid" '$1 == p { print $2; exit }' <<<"$window_pids")
+    [[ -n $address ]] && { echo "$address"; return 0; }
+    pid=$(awk '/^PPid:/ { print $2 }' "/proc/$pid/status" 2>/dev/null) || return 1
+    [[ -z $pid ]] && return 1
+    hops=$((hops + 1))
+  done
+  return 1
+}
+
+for pid in $(pgrep -x herdr 2>/dev/null); do
+  is_client_for_machine "$pid" || continue
+  if address=$(find_window "$pid"); then
+    if [[ -n ${HERD_FOCUS_DRY:-} ]]; then
+      echo "would focus window $address (herdr client pid $pid)"
+      exit 0
+    fi
+    hyprctl dispatch "hl.dsp.focus({ window = \"address:$address\" })" >/dev/null 2>&1 ||
+      hyprctl dispatch focuswindow "address:$address" >/dev/null 2>&1
+    exit 0
+  fi
+done
+
+app_id="org.omarchy.herdr"
+[[ $MACHINE != "local" ]] && app_id="org.omarchy.herdr-$MACHINE"
+run omarchy-launch-tui --app-id="$app_id" "${attach[@]}"

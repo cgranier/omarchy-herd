@@ -1,0 +1,104 @@
+{
+  "schemaVersion": 1,
+  "id": "cgranier.herd",
+  "name": "Herd",
+  "version": "0.2.0",
+  "author": "Carlos Granier",
+  "license": "MIT",
+  "description": "Live state of every herdr coding agent, on this machine and your saved remote machines, in the Omarchy bar.",
+  "kinds": [
+    "bar-widget"
+  ],
+  "entryPoints": {
+    "barWidget": "Panel.qml"
+  },
+  "barWidget": {
+    "displayName": "Herd",
+    "description": "Working, blocked, and done counts for herdr agents across machines, with a panel to jump to any of them and a toast when one needs you.",
+    "category": "AI",
+    "aliases": [
+      "herd",
+      "herdr",
+      "agent-status"
+    ],
+    "allowMultiple": false,
+    "defaultSection": "right",
+    "defaults": {
+      "herdrPath": "",
+      "includeLocal": true,
+      "machines": "",
+      "refreshIntervalSec": 20,
+      "notifyBlocked": true,
+      "notifyDone": true,
+      "hideWhenEmpty": false,
+      "collapseIdle": true,
+      "blockedBypassesDnd": false
+    },
+    "schema": [
+      {
+        "key": "herdrPath",
+        "type": "path",
+        "label": "herdr binary",
+        "defaultValue": "",
+        "description": "Optional. Defaults to ~/.local/bin/herdr when present, otherwise the herdr on PATH."
+      },
+      {
+        "key": "includeLocal",
+        "type": "boolean",
+        "label": "This machine",
+        "defaultValue": true,
+        "description": "Include agents from the local herdr server."
+      },
+      {
+        "key": "machines",
+        "type": "string",
+        "label": "Remote machines",
+        "defaultValue": "",
+        "description": "Comma-separated herdr machine labels. Leave empty for every enabled machine in `herdr machine list`; use `none` for local only."
+      },
+      {
+        "key": "refreshIntervalSec",
+        "type": "integer",
+        "label": "Remote refresh (seconds)",
+        "min": 5,
+        "max": 3600,
+        "step": 5,
+        "defaultValue": 20,
+        "description": "How often remote machines are polled. Local changes arrive instantly over the herdr event socket."
+      },
+      {
+        "key": "notifyBlocked",
+        "type": "boolean",
+        "label": "Notify when blocked",
+        "defaultValue": true,
+        "description": "Toast when an agent starts waiting on you. Click it to jump to the agent."
+      },
+      {
+        "key": "notifyDone",
+        "type": "boolean",
+        "label": "Notify when done",
+        "defaultValue": true
+      },
+      {
+        "key": "blockedBypassesDnd",
+        "type": "boolean",
+        "label": "Blocked breaks through Do Not Disturb",
+        "defaultValue": false,
+        "description": "Send blocked toasts as critical alerts so they show even while notifications are silenced. These toasts are not kept in notification history."
+      },
+      {
+        "key": "collapseIdle",
+        "type": "boolean",
+        "label": "Collapse idle agents",
+        "defaultValue": true,
+        "description": "Fold each machine's idle agents into one row. Agents that need you are always listed on top."
+      },
+      {
+        "key": "hideWhenEmpty",
+        "type": "boolean",
+        "label": "Hide with no agents",
+        "defaultValue": false
+      }
+    ]
+  }
+}

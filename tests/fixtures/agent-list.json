@@ -1,0 +1,6 @@
+{"id":"cli:agent:list","result":{"type":"agent_list","agents":[
+{"agent":"claude","agent_status":"idle","cwd":"/home/dev/projects/api","focused":false,"foreground_cwd":"/home/dev/projects/api","pane_id":"w2:p1","revision":0,"state_change_seq":7,"tab_id":"w2:t1","terminal_id":"term_aaa","workspace_id":"w2"},
+{"agent":"codex","name":"migrator","agent_status":"blocked","cwd":"/home/dev/projects/web","focused":true,"foreground_cwd":"/home/dev/projects/web/src","pane_id":"w3:p1","revision":2,"state_change_seq":9,"tab_id":"w3:t1","terminal_id":"term_bbb","workspace_id":"w3","title":"Fix login"},
+{"agent":"claude","agent_status":"working","cwd":"/home/dev","focused":false,"foreground_cwd":null,"pane_id":"w4:p1","revision":0,"state_change_seq":3,"tab_id":"w4:t1","terminal_id":"term_ccc","workspace_id":"w4"},
+{"agent":null,"agent_status":"weird","cwd":null,"focused":false,"pane_id":"w5:p1","revision":0,"tab_id":"w5:t1","terminal_id":"term_ddd","workspace_id":"w5"}
+]}}
