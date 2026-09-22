@@ -63,7 +63,8 @@ Item {
   // is refused by the server with protocol_mismatch.
   function discover() {
     if (discoverProcess.running) return
-    discoverProcess.command = ["sh", "-c",
+    // Deadline: a stalled herdr must not hold discovery open forever.
+    discoverProcess.command = ["timeout", "10", "sh", "-c",
       'p="$1"; if [ -z "$p" ]; then for c in "$HOME/.local/bin/herdr" "$(command -v herdr 2>/dev/null)"; do ' +
       'if [ -n "$c" ] && [ -x "$c" ]; then p="$c"; break; fi; done; fi; ' +
       '[ -n "$p" ] && [ -x "$p" ] || exit 127; echo "$p"; uname -n; "$p" machine list 2>/dev/null; exit 0',
