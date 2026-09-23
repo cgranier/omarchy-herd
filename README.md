@@ -87,6 +87,15 @@ toasts still land in notification history, and the bar's urgent color keeps work
 blocked toasts use the one path Omarchy lets through DND (critical urgency under the `notify-send` identity), which
 also means they stay on screen until dismissed and are not kept in history.
 
+## Uninstall
+
+```bash
+omarchy plugin remove cgranier.herd
+```
+
+Herd keeps no files of its own; settings live in the widget's entry in `~/.config/omarchy/shell.json`, which `remove` drops.
+herdr and its machines are untouched.
+
 ## Development
 
 ```
