@@ -3,6 +3,8 @@
 Live state of every [herdr](https://herdr.dev) coding agent — on this machine and on your saved remote
 machines — in the Omarchy bar.
 
+![Herd panel](preview.jpg)
+
 `omarchy.agents` tells you how much of your subscription you've burned. Herd tells you **which agent needs
 you right now**, wherever it's running.
 
@@ -38,7 +40,7 @@ you right now**, wherever it's running.
 ## Install
 
 ```bash
-omarchy plugin add <this-repo-url> --enable
+omarchy plugin add https://github.com/cgranier/omarchy-herd.git --enable
 ```
 
 Requires `herdr` (shipped in the Omarchy repo), `jq`, and `hyprctl`.
@@ -96,6 +98,7 @@ EventStream.qml     local herdr socket subscription; nudges the local poll on ev
 Model.js            pure parsing/shaping logic (no QML imports)
 bin/herd-focus      jump-to-agent helper (HERD_FOCUS_DRY=1 to dry-run)
 tests/              node tests + synthetic fixtures
+tests/demo-world.sh start|restore   a fictional fleet (tests/demo-world/herdr), for screenshots and demos
 ```
 
 ```bash

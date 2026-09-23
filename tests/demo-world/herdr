@@ -1,0 +1,24 @@
+#!/bin/bash
+# A stand-in for the herdr CLI with a fictional fleet, for screenshots and demos. It answers the two
+# calls Herd makes (`machine list`, `agent list [--machine <label>]`) and nothing else. Point the widget
+# at it with:  omarchy bar set cgranier.herd herdrPath <this file>
+machine=""; cmd=()
+while (($#)); do case $1 in --machine) shift; machine=${1:-} ;; *) cmd+=("$1") ;; esac; shift; done
+agent() { # id agent status cwd title
+  printf '{"agent":"%s","agent_status":"%s","cwd":"%s","foreground_cwd":"%s","focused":false,"pane_id":"w1:p%s","tab_id":"w1:t%s","terminal_id":"term_%s","terminal_title_stripped":"%s","workspace_id":"w1"}' \
+    "$2" "$3" "$4" "$4" "$1" "$1" "$1" "$5"
+}
+case "${cmd[*]}" in
+"machine list")
+  printf '1111\tbuildbox\tbuildbox\tdefault\tenabled\n2222\tnas\tnas\tdefault\tenabled\n3333\tpi\tpi\tdefault\tenabled\n' ;;
+"agent list")
+  case $machine in
+    "") list="" ;;
+    buildbox) list="$(agent 1 claude working /home/ada/code/api "Add rate limiting to the API"),$(agent 2 codex blocked /home/ada/code/site "Migrate the blog to Astro"),$(agent 3 claude idle /home/ada/code/api ""),$(agent 4 claude done /home/ada/code/firmware "Fix the bootloader build")" ;;
+    nas) list="$(agent 7 grok working /home/ada/photos "Deduplicate the photo library"),$(agent 8 gemini idle /home/ada "")" ;;
+    pi) echo '{"error":{"code":"unreachable","message":"ssh: connect to host pi port 22: No route to host"}}'; exit 1 ;;
+    *) list="" ;;
+  esac
+  printf '{"id":"cli:agent:list","result":{"agents":[%s]}}\n' "$list" ;;
+*) echo "demo herdr: unsupported: ${cmd[*]}" >&2; exit 2 ;;
+esac

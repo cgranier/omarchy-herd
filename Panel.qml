@@ -147,7 +147,7 @@ Panel {
     open: root.opened
     focusTarget: keyCatcher
     contentWidth: panel.fittedContentWidth(Style.space(400))
-    contentHeight: panel.fittedContentHeight(column.implicitHeight, Style.space(560))
+    contentHeight: panel.fittedContentHeight(column.implicitHeight + footer.implicitHeight + Style.space(12), Style.space(560))
 
     PanelKeyCatcher {
       id: keyCatcher
@@ -169,7 +169,11 @@ Panel {
 
       Flickable {
         id: panelFlick
-        anchors.fill: parent
+        anchors.top: parent.top
+        anchors.left: parent.left
+        anchors.right: parent.right
+        anchors.bottom: footer.top
+        anchors.bottomMargin: Style.space(8)
         contentWidth: width
         contentHeight: column.implicitHeight
         clip: true
@@ -233,17 +237,22 @@ Panel {
               }
             }
           }
-
-          Text {
-            textFormat: Text.PlainText
-            width: parent.width
-            text: "enter jump · b next waiting · r refresh"
-            color: root.dim
-            font.family: root.fontFamily
-            font.pixelSize: Style.font.caption
-            horizontalAlignment: Text.AlignHCenter
-          }
         }
+      }
+
+      // Stays put while the list scrolls.
+      Text {
+        id: footer
+        textFormat: Text.PlainText
+        anchors.left: parent.left
+        anchors.right: parent.right
+        anchors.bottom: parent.bottom
+        horizontalAlignment: Text.AlignHCenter
+        text: "enter jump · b next waiting · r refresh"
+        color: root.dim
+        font.family: root.fontFamily
+        font.pixelSize: Style.font.caption
+        wrapMode: Text.WordWrap
       }
     }
   }
