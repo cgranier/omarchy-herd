@@ -32,7 +32,7 @@ function normalizeStatus(status) {
 function parseMachineList(raw) {
   var machines = []
   var lines = String(raw || "").split("\n")
-  for (var i = 0; i < lines.length; i++) {
+  for (var i = 0; i < lines.length && machines.length < MAX_MACHINES; i++) {
     var cols = lines[i].split("\t")
     if (cols.length < 5) continue
     var label = cols[1].trim()
@@ -99,8 +99,17 @@ function agentFromInfo(info, machineLabel, machineName) {
 // Turns one `herdr agent list` reply into { ok, agents, error, errorCode }.
 // herdr answers errors as JSON too ({"error":{"code","message"}}), and a dead
 // ssh hop or a missing binary answers with plain stderr text instead.
+// Ceilings on what one machine may hand the shell: the poller cuts a reply
+// at MAX_REPLY_BYTES, and a reply that reaches the cut is refused whole
+// rather than parsed as a truncated document.
+var MAX_REPLY_BYTES = 2000000
+var MAX_AGENTS = 500
+var MAX_MACHINES = 200
+
 function parseAgentList(raw, machineLabel, machineName) {
-  var text = String(raw || "").trim()
+  var text = String(raw || "")
+  if (text.length >= MAX_REPLY_BYTES) return { ok: false, agents: [], errorCode: "too_large", error: "Reply too large to trust" }
+  text = text.trim()
   if (text === "") return { ok: false, agents: [], errorCode: "empty", error: "No reply" }
   var doc
   try {
@@ -121,7 +130,7 @@ function parseAgentList(raw, machineLabel, machineName) {
     return { ok: false, agents: [], errorCode: "shape", error: "Unexpected herdr reply" }
   }
   var agents = []
-  for (var i = 0; i < list.length; i++) agents.push(agentFromInfo(list[i] || {}, machineLabel, machineName))
+  for (var i = 0; i < list.length && i < MAX_AGENTS; i++) agents.push(agentFromInfo(list[i] || {}, machineLabel, machineName))
   agents.sort(compareAgents)
   return { ok: true, agents: agents, errorCode: "", error: "" }
 }
@@ -329,6 +338,7 @@ function notificationText(agent, localLabel) {
 
 if (typeof module !== "undefined" && module.exports) {
   module.exports = {
+    MAX_REPLY_BYTES: MAX_REPLY_BYTES, MAX_AGENTS: MAX_AGENTS, MAX_MACHINES: MAX_MACHINES,
     GLYPHS: GLYPHS,
     statusGlyph: statusGlyph,
     parseMachineList: parseMachineList,

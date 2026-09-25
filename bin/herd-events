@@ -1,0 +1,83 @@
+#!/usr/bin/python3
+"""Bridge herdr's event socket to stdout, with hard limits.
+
+Usage: herd-events <socket-path> <subscribe-request-json>
+
+Connects, sends the request, and prints each newline-terminated frame the
+server sends, one per line. The shell reads those lines; it never touches the
+socket itself, so every limit lives here where it can be enforced before
+anything is buffered:
+
+  - a frame longer than MAX_FRAME bytes without a newline ends the bridge
+    (exit 3) rather than growing a buffer;
+  - more than MAX_TOTAL bytes over the connection's life ends it (exit 4),
+    and the shell reconnects with a fresh budget;
+  - the server closing the socket ends it (exit 0), and a connect that does
+    not complete within a few seconds ends it (exit 2).
+
+Nothing here interprets the frames beyond finding newlines.
+"""
+import os
+import socket
+import sys
+
+MAX_FRAME = int(os.environ.get("HERD_EVENTS_MAX_FRAME", 64 * 1024))
+MAX_TOTAL = int(os.environ.get("HERD_EVENTS_MAX_TOTAL", 32 * 1024 * 1024))
+CONNECT_TIMEOUT = 5.0
+
+
+def main(argv):
+    if len(argv) != 3:
+        print("usage: herd-events <socket-path> <subscribe-request-json>", file=sys.stderr)
+        return 1
+    path, request = argv[1], argv[2]
+    if len(request) > MAX_FRAME:
+        print("herd-events: subscribe request too large", file=sys.stderr)
+        return 1
+    sock = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
+    sock.settimeout(CONNECT_TIMEOUT)
+    try:
+        sock.connect(path)
+        sock.sendall(request.encode("utf-8") + b"\n")
+    except OSError as error:
+        print(f"herd-events: {error}", file=sys.stderr)
+        return 2
+    sock.settimeout(None)
+    out = sys.stdout.buffer
+    buffer = b""
+    total = 0
+    while True:
+        try:
+            chunk = sock.recv(65536)
+        except OSError as error:
+            print(f"herd-events: {error}", file=sys.stderr)
+            return 2
+        if not chunk:
+            return 0
+        total += len(chunk)
+        if total > MAX_TOTAL:
+            print("herd-events: byte budget exhausted, reconnecting", file=sys.stderr)
+            return 4
+        buffer += chunk
+        while True:
+            newline = buffer.find(b"\n")
+            if newline == -1:
+                break
+            frame, buffer = buffer[:newline], buffer[newline + 1:]
+            if len(frame) > MAX_FRAME:
+                print("herd-events: frame too large", file=sys.stderr)
+                return 3
+            out.write(frame + b"\n")
+            out.flush()
+        if len(buffer) > MAX_FRAME:
+            print("herd-events: unterminated frame too large", file=sys.stderr)
+            return 3
+
+
+if __name__ == "__main__":
+    try:
+        sys.exit(main(sys.argv))
+    except KeyboardInterrupt:
+        sys.exit(0)
+    except BrokenPipeError:
+        sys.exit(0)

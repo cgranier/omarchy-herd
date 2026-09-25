@@ -37,9 +37,15 @@ Item {
     // A nudge that lands mid-poll would otherwise be lost, and the poll in
     // flight may predate the change it was announcing.
     if (pollProcess.running) { _again = true; return }
-    var command = ["timeout", String(timeoutSec), herdrPath]
-    if (!isLocal) command = command.concat(["--machine", label])
-    pollProcess.command = command.concat(["agent", "list"])
+    // Bounded at the producer: timeout wraps herdr itself (so it is the one
+    // killed), and head caps what reaches the shell on each stream. A reply
+    // cut at the cap is refused by the parser as too large.
+    var args = [herdrPath]
+    if (!isLocal) args = args.concat(["--machine", label])
+    args = args.concat(["agent", "list"])
+    pollProcess.command = ["bash", "-o", "pipefail", "-c",
+      'timeout "$1" "${@:2}" 2> >(head -c 65536 >&2) | head -c ' + String(Model.MAX_REPLY_BYTES),
+      "bash", String(timeoutSec)].concat(args)
     pollProcess.running = true
   }
 

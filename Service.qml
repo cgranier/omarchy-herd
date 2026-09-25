@@ -67,7 +67,7 @@ Item {
     discoverProcess.command = ["timeout", "10", "sh", "-c",
       'p="$1"; if [ -z "$p" ]; then for c in "$HOME/.local/bin/herdr" "$(command -v herdr 2>/dev/null)"; do ' +
       'if [ -n "$c" ] && [ -x "$c" ]; then p="$c"; break; fi; done; fi; ' +
-      '[ -n "$p" ] && [ -x "$p" ] || exit 127; echo "$p"; uname -n; "$p" machine list 2>/dev/null; exit 0',
+      '[ -n "$p" ] && [ -x "$p" ] || exit 127; echo "$p"; uname -n; "$p" machine list 2>/dev/null | head -c 262144; exit 0',
       "sh", String(setting("herdrPath", "") || "")]
     discoverProcess.running = true
   }

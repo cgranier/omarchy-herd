@@ -138,4 +138,14 @@ test("durations, meta, and notification text", () => {
   assert.strictEqual(Model.notificationText(local, "local").headline, "claude finished")
 })
 
+test("replies are bounded: an oversized reply is refused whole, long lists are cut", () => {
+  const huge = JSON.stringify({ result: { agents: [] } }) + " ".repeat(Model.MAX_REPLY_BYTES)
+  const refused = Model.parseAgentList(huge, "local", "here")
+  assert.deepStrictEqual([refused.ok, refused.errorCode], [false, "too_large"])
+  const many = JSON.stringify({ result: { agents: Array.from({ length: Model.MAX_AGENTS + 20 }, (_, i) => ({ agent: "claude", agent_status: "idle", pane_id: "w1:p" + i })) } })
+  assert.strictEqual(Model.parseAgentList(many, "local", "here").agents.length, Model.MAX_AGENTS)
+  const rows = Array.from({ length: Model.MAX_MACHINES + 5 }, (_, i) => `id${i}\tm${i}\tm${i}\tdefault\tenabled`).join("\n")
+  assert.strictEqual(Model.parseMachineList(rows).length, Model.MAX_MACHINES)
+})
+
 console.log("\n" + passed + " tests passed")
