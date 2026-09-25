@@ -148,4 +148,12 @@ test("replies are bounded: an oversized reply is refused whole, long lists are c
   assert.strictEqual(Model.parseMachineList(rows).length, Model.MAX_MACHINES)
 })
 
+test("ids from herdr are shape-checked before they can reach argv", () => {
+  assert.strictEqual(Model.safeId("term_65bdfdd3b002c1"), "term_65bdfdd3b002c1")
+  assert.strictEqual(Model.safeId("w5:p1"), "w5:p1")
+  for (const bad of ["-x", "a b", "$(id)", "x;y", "", "a".repeat(200)]) assert.strictEqual(Model.safeId(bad), "", bad)
+  const agent = Model.parseAgentList(JSON.stringify({ result: { agents: [{ agent: "claude", agent_status: "idle", terminal_id: "--evil", pane_id: "w1:p1" }] } }), "local", "here").agents[0]
+  assert.strictEqual(agent.terminalId, "")
+})
+
 console.log("\n" + passed + " tests passed")

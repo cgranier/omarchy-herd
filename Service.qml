@@ -181,15 +181,21 @@ Item {
     return null
   }
 
+  // Null when any of the pieces is not a plainly shaped id, in which case
+  // there is nothing safe to run.
   function focusCommand(agent) {
     var machine = machineFor(agent.machine)
-    return ["bash", focusScript, herdrPath, agent.machine, machine ? String(machine.host || "") : "",
-      agent.terminalId, machine ? String(machine.session || "default") : "default"]
+    var label = Model.safeId(agent.machine)
+    var host = machine ? Model.safeId(machine.host || "") : ""
+    var session = machine ? Model.safeId(machine.session || "default") : "default"
+    if (label === "" || agent.terminalId === "" || (machine && machine.host && host === "") || session === "") return null
+    return ["bash", focusScript, herdrPath, label, host, agent.terminalId, session]
   }
 
   function focusAgent(agent) {
     if (!agent || herdrPath === "") return
-    Quickshell.execDetached(focusCommand(agent))
+    var command = focusCommand(agent)
+    if (command) Quickshell.execDetached(command)
   }
 
   function announce(changed, list) {
@@ -206,7 +212,8 @@ Item {
         "-u", urgent ? "critical" : agent.status === "blocked" ? "normal" : "low",
         text.headline]
       if (text.body !== "") command.push(text.body)
-      Quickshell.execDetached(command.concat(["--exec"], focusCommand(agent)))
+      var focus = focusCommand(agent)
+      Quickshell.execDetached(focus ? command.concat(["--exec"], focus) : command)
     }
   }
 

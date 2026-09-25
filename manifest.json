@@ -2,7 +2,7 @@
   "schemaVersion": 1,
   "id": "cgranier.herd",
   "name": "Herd",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "author": "Carlos Granier",
   "license": "MIT",
   "description": "Live state of every herdr coding agent, on this machine and your saved remote machines, in the Omarchy bar.",

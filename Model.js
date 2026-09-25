@@ -77,6 +77,15 @@ function shortenPath(path) {
   return value
 }
 
+// Ids and labels from herdr's output end up as arguments to herd-focus and
+// to herdr itself. Only plainly shaped ones do; the rest get no command.
+var SAFE_ID = /^[A-Za-z0-9][A-Za-z0-9._:@-]{0,127}$/
+
+function safeId(value) {
+  var text = String(value || "")
+  return SAFE_ID.test(text) ? text : ""
+}
+
 function agentFromInfo(info, machineLabel, machineName) {
   var name = info.name || info.display_agent || info.agent || "agent"
   var cwd = info.foreground_cwd || info.cwd || ""
@@ -84,9 +93,9 @@ function agentFromInfo(info, machineLabel, machineName) {
     key: machineLabel + "/" + String(info.terminal_id || info.pane_id || ""),
     machine: machineLabel,
     machineName: String(machineName || machineLabel),
-    terminalId: String(info.terminal_id || ""),
-    paneId: String(info.pane_id || ""),
-    workspaceId: String(info.workspace_id || ""),
+    terminalId: safeId(info.terminal_id),
+    paneId: safeId(info.pane_id),
+    workspaceId: safeId(info.workspace_id),
     name: String(name),
     kind: String(info.agent || ""),
     status: normalizeStatus(info.agent_status),
@@ -338,6 +347,7 @@ function notificationText(agent, localLabel) {
 
 if (typeof module !== "undefined" && module.exports) {
   module.exports = {
+    SAFE_ID: SAFE_ID, safeId: safeId,
     MAX_REPLY_BYTES: MAX_REPLY_BYTES, MAX_AGENTS: MAX_AGENTS, MAX_MACHINES: MAX_MACHINES,
     GLYPHS: GLYPHS,
     statusGlyph: statusGlyph,
